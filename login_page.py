@@ -6,7 +6,6 @@ from selenium.webdriver import ChromeOptions
 import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support.expected_conditions import presence_of_element_located
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 import logging
@@ -25,7 +24,6 @@ class LoginPage:
         self.wait = WebDriverWait(self.driver, 10)
 
         #window instances
-
 
         #logger instance
         self.logger = logging.getLogger('DatingAutomationLogger')
@@ -89,7 +87,7 @@ class LoginPage:
         password_element.send_keys(self.password)
         print(self.password)
 
-    def switch_window_and_verify(self,new_window, new_window_title):
+    def switch_window_and_verify(self, new_window, new_window_title):
         self.driver.switch_to.window(new_window)
 
         try:
@@ -133,4 +131,3 @@ class LoginPage:
 
         #switch back to tinder page
         self.switch_window_and_verify(base_window, self.tinder_title)
-
