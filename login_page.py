@@ -12,6 +12,7 @@ class LoginPage(BasePage):
     def __init__(self, driver, logger):
         super().__init__(driver, logger)
         self.current_web_title = self.driver.title.lower()
+        self.logging = logger
 
         #credentials
         self.username = os.getenv("YOUR_USERNAME")
@@ -26,6 +27,7 @@ class LoginPage(BasePage):
         self.EMAIL_LOCATOR = (By.ID, 'email')
         self.PASSWORD_LOCATOR = (By.ID, 'pass')
         self.TEXT_ON_FB_PAGE = (By.ID, "homelink")
+        self.CONTINUE_TO_FB_LOCATOR = (By.XPATH, '//span[text()="Continue as Itz IK"]')
 
 
     def click_fb_login_btn(self):
@@ -34,19 +36,22 @@ class LoginPage(BasePage):
                 ec.presence_of_element_located(self.FB_LOGIN_BTN_LOCATOR)
             )
             fb_login_btn.click()
+            self.logging.info("FB login button clicked")
 
         except TimeoutException:
-            logging.info('Failed to click the facebook login button. Script timed out')
+            self.logging.info('Failed to click the facebook login button. Script timed out')
             raise Exception("Failed to click the facebook login button. Script timed out")
 
     def enter_email(self):
         email_element = self.driver.find_element(*self.EMAIL_LOCATOR)
         email_element.send_keys(self.username)
+        self.logging.info('Entering email')
         print(self.username)
 
     def enter_password(self):
         password_element = self.driver.find_element(*self.PASSWORD_LOCATOR)
         password_element.send_keys(self.password)
+        self.logging.info('Entering password')
         print(self.password)
 
     def switch_window_and_verify(self, new_window, new_window_title):
@@ -67,16 +72,30 @@ class LoginPage(BasePage):
             raise ValueError(f'Page Timed out while switching to {new_window_title}')
 
         except new_window_title == 'new tab':
-            logging.info(f'Failed to switch to {new_window_title}, page still in {self.current_web_title}')
+            self.logging.info(f'Failed to switch to {new_window_title}, page still in {self.current_web_title}')
             raise ValueError(f"Failed to switch to {new_window_title},page still in {self.current_web_title}")
+
+
+    def click_continue_to_fb(self):
+        try:
+            continue_btn = self.wait.until(
+                ec.presence_of_element_located(self.CONTINUE_TO_FB_LOCATOR)
+            )
+            continue_btn.click()
+            self.logging.info('Successfully clicked Continue button')
+
+        except TimeoutException:
+            self.logging.info('Failed to click Continue button')
+
 
     def login_fb(self,is_navigate_login):
 
         if not is_navigate_login:
+            self.logging.warning("Log in failed due to timeout while trying to navigate to login page")
             raise ValueError('Login failed due to timeout while navigating to login page')
 
         if not self.username or not self.password:
-            logging.info("No username or password saved in the .env file")
+            self.logging.info("No username or password saved in the .env file")
             raise ValueError("No username or password saved to .env file")
 
         base_window = self.driver.window_handles[0]

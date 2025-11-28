@@ -1,4 +1,4 @@
-from selenium.common import TimeoutException
+from selenium.common import TimeoutException, NoSuchElementException
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.keys import Keys
@@ -13,28 +13,37 @@ class DismissRequests(BasePage):
 
         self.LOCATION_LOCATOR = (By.XPATH, '//div[text()="Allow"]')
         self.NOTIFICATION_LOCATOR = (By.XPATH, '//div[text()="I’ll miss out"]')
-        self.COOKIES_LOCATOR = (By.XPATH,)
+        # self.COOKIES_LOCATOR = (By.XPATH, )
 
         self.locators_list = [
             {'locator': self.LOCATION_LOCATOR, 'description': 'allow for locator popup'},
             {'locator': self.NOTIFICATION_LOCATOR, 'description': 'not interested for notification popup'},
-            {'locator': self.COOKIES_LOCATOR, 'description': 'I accept for cookies popup'},
+            # {'locator': self.COOKIES_LOCATOR, 'description': 'I accept for cookies popup'},
         ]
 
     def dismiss_requests(self,locator, description):
 
         try:
             request = self.wait.until(
-                ec.presence_of_element_located(*locator)
+                ec.presence_of_element_located(locator)
             )
 
             request.click()
             self.logging.info(f'Clicked {description} ')
             return True, f'Clicked {description} '
 
+        # except NoSuchElementException:
+        #     self.logging.error(f'{description} Not found, skipping element')
+        #     return True, f'{description} Not found, skipping element'
+
         except TimeoutException:
-            self.logging.error(f'Timeout while trying to click {description}')
-            return False, f'Timeout while trying to click {description}'
+            self.logging.error(f'Timeout while trying to click {description}, skipping element')
+            return True, f'Timeout while trying to click {description}, skipping element'
+
+        except Exception as e:
+            self.logging.error(e)
+            return False, f'Unexpected error while trying to click element {description}'
+
 
     def dismiss_all_pop_up_requests(self):
         for item in self.locators_list:

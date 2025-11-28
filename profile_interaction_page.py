@@ -11,7 +11,7 @@ class ProfileInteractionPage(BasePage):
     def __init__(self, driver, logger):
         super().__init__(driver,logger)
 
-        self.LIKE_BTN_LOCATOR = (By.XPATH, '//span[text()="Nope"]')
+        self.LIKE_BTN_LOCATOR = (By.XPATH, '//button//span[text()="Nope"]')
         self.BACK_TO_TINDER_LOCATOR = ()
         self.like_count = 0
 
@@ -19,7 +19,7 @@ class ProfileInteractionPage(BasePage):
 
         try:
             like_btn_element = self.wait.until(
-                ec.presence_of_element_located(*self.LIKE_BTN_LOCATOR)
+                ec.presence_of_element_located(self.LIKE_BTN_LOCATOR)
             )
 
             like_btn_element.click()
@@ -37,7 +37,7 @@ class ProfileInteractionPage(BasePage):
             self.logging.info('A pop up is obstructing the like btn, Attempting to click the  Back to tinder page')
             try:
                 bck_to_tinder_btn = self.wait.until(
-                    ec.presence_of_element_located(*self.BACK_TO_TINDER_LOCATOR)
+                    ec.presence_of_element_located(self.BACK_TO_TINDER_LOCATOR)
 
                 )
                 bck_to_tinder_btn.click()

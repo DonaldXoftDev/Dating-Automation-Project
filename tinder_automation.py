@@ -36,17 +36,24 @@ def setup_logger(directory):
     log_filename = datetime.datetime.now().strftime("automation_%Y%m%d_%H%M%S.log")
     full_path = os.path.join(directory, log_filename)
 
-    # Configure the basic settings
     logging.basicConfig(
         # Save messages to the defined file
         filename=full_path,
-        # Set the minimum level to save: DEBUG means save everything
-        level=logging.DEBUG,
+        # ... (Keep existing file setup and format) ...
+        level=logging.INFO,  # Set your primary app level to INFO (or DEBUG if you need detail)
         # Define the format of the log message
         format='%(asctime)s - %(levelname)s - %(module)s - %(message)s'
     )
-    #  Get the main logger object you'll use everywhere
-    return logging.getLogger('DatingAutomationLogger')
+
+    #  Silence the Noise (Crucial Step!)
+    # Set the log level of Selenium's low-level communication to WARNING or higher
+    logging.getLogger('selenium.webdriver.remote.remote_connection').setLevel(logging.WARNING)
+
+    # Set the log level of the underlying HTTP connection pool to WARNING
+    logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
+
+    #  Return your application logger
+    return logging.getLogger('DatingAutomationLogger')  # Use your application's logger name
 
 
 # Call this once to get your logger object
@@ -85,34 +92,49 @@ class TinderAutomation:
         )
         tinder_login_element.click()
 
-    def navigate_to_login(self):
-        self.driver.get(self.WEB_URL)
+    def is_on_tinder(self):
+        try:
+            self.wait.until(ec.url_contains(self.expected_page_url))
+            self.logger.info(f'Url verification Successful for {self.expected_page_url}')
+            return  True
 
-        is_on_tinder_site = True if self.wait.until(ec.url_contains(self.expected_page_url)) else False
+        except TimeoutException:
+            self.logger.warning("URL verification failed: Timed out waiting for the correct page.")
+            return False
+
+        except Exception as e:
+            self.logger.error(f'Unexpected error during URL check: {e}')
+            return False
+
+    def navigate_to_login(self):
+        is_on_tinder_site = self.is_on_tinder()
 
         if not is_on_tinder_site:
             try:
                 self.click_tinder_login()
                 self.click_tinder_fb_login_btn()
-
                 return True
 
             except TimeoutException:
-                logging.warning("Timed out while navigating to login page")
+                self.logger.warning("Timed out while navigating to login page")
                 return False
 
             except StaleElementReferenceException:
                 logging.warning("Login button not fully loaded while navigating to login page")
                 return False
-        else:
-            self.is_logged_in = is_on_tinder_site
+
+
+        self.is_logged_in = is_on_tinder_site
+        return False
 
 
 
     def run_dating_automation(self):
 
         is_navigate_login = self.navigate_to_login()
-        self.login_to_tinder.login_fb(is_navigate_login)
+
+        if  is_navigate_login:
+            self.login_to_tinder.login_fb(is_navigate_login)
 
         if self.is_logged_in:
             self.dismiss_requests.dismiss_all_pop_up_requests()
@@ -121,6 +143,8 @@ class TinderAutomation:
                 if not is_hit:
                     break
 
+dating_automation = TinderAutomation()
+dating_automation.run_dating_automation()
 
 
 
