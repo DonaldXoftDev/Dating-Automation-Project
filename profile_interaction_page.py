@@ -11,7 +11,7 @@ class ProfileInteractionPage(BasePage):
     def __init__(self, driver, logger):
         super().__init__(driver,logger)
 
-        self.LIKE_BTN_LOCATOR = ()
+        self.LIKE_BTN_LOCATOR = (By.XPATH, '//span[text()="Nope"]')
         self.BACK_TO_TINDER_LOCATOR = ()
         self.like_count = 0
 
@@ -43,6 +43,10 @@ class ProfileInteractionPage(BasePage):
                 bck_to_tinder_btn.click()
                 self.logging.info('Successfully clicked back to tinder page')
                 return True
+
+            except NoSuchElementException:
+                self.logging.Warning('Back to tinder page btn not the popup interrupting the script')
+                return False
 
             except TimeoutException:
                 self.logging.error(f"Couldn't click back to tinder page. Not fully loaded")
