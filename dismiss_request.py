@@ -2,13 +2,17 @@ from selenium.common import TimeoutException
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 import logging
+from base_page import BasePage
 
-class DismissRequests:
-    def __init__(self, driver):
-        self.driver = driver
-        self.LOCATION_LOCATOR = ''
-        self.NOTIFICATION_LOCATOR = ''
-        self.COOKIES_LOCATOR = ''
+
+class DismissRequests(BasePage):
+
+    def __init__(self, driver, logger):
+        super().__init__(driver, logger)
+
+        self.LOCATION_LOCATOR = ()
+        self.NOTIFICATION_LOCATOR = ()
+        self.COOKIES_LOCATOR = ()
 
         self.locators_list = [
             {'locator': self.LOCATION_LOCATOR, 'description': 'allow for locator popup'},
@@ -16,18 +20,12 @@ class DismissRequests:
             {'locator': self.COOKIES_LOCATOR, 'description': 'I accept for cookies popup'},
         ]
 
-        self.wait = WebDriverWait(driver, 10)
-        self.logging = logging.getLogger('DatingAutomationLogger')
-        self.request_description = None
-
-
     def dismiss_requests(self,locator, description):
 
         try:
             request = self.wait.until(
                 ec.presence_of_element_located(*locator)
             )
-            self.request_description = request.text
 
             request.click()
             self.logging.info(f'Clicked {description} ')

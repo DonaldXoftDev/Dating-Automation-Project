@@ -10,10 +10,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 import logging
 
+from base_page import BasePage
 
-class LoginPage:
-    def __init__(self, driver):
-        self.driver = driver
+class LoginPage(BasePage):
+    def __init__(self, driver, logger):
+        super().__init__(driver, logger)
         self.WEB_URL = "https://tinder.com"
         self.current_web_title = self.driver.title.lower()
 
@@ -21,12 +22,7 @@ class LoginPage:
         self.username = os.getenv("YOUR_USERNAME")
         self.password = os.getenv("YOUR_PASSWORD")
 
-        self.wait = WebDriverWait(self.driver, 10)
 
-        #window instances
-
-        #logger instance
-        self.logger = logging.getLogger('DatingAutomationLogger')
         self.fb_login_title = 'Facebook'
         self.tinder_title = 'Tinder | Match. Chat. Date.'
 

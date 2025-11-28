@@ -5,13 +5,14 @@ from selenium.webdriver.support import expected_conditions as ec
 import time
 import logging
 
-class ProfileInteractionPage:
-    def __init__(self, driver):
-        self.driver = driver
+from base_page import BasePage
+class ProfileInteractionPage(BasePage):
+
+    def __init__(self, driver, logger):
+        super().__init__(driver,logger)
+
         self.LIKE_BTN_LOCATOR = ()
         self.BACK_TO_TINDER_LOCATOR = ()
-        self.wait = WebDriverWait(driver, 10)
-        self.logging = logging.getLogger('DatingAutomationLogger')
         self.like_count = 0
 
     def hit_like_btn(self):

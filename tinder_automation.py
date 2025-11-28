@@ -10,6 +10,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from dotenv import load_dotenv
 from login_page import LoginPage
+from profile_interaction_page import ProfileInteractionPage
+from dismiss_request import DismissRequests
 load_dotenv()
 
 chrome_options = webdriver.ChromeOptions()
@@ -21,8 +23,8 @@ user_data_dir = os.path.join(os.getcwd(), 'chrome_profile')
 #store profile info in specified directory
 chrome_options.add_argument(f'--user-data-dir={user_data_dir}')
 
-#open website
-driver = webdriver.Chrome(options=chrome_options)
+
+
 
 import logging
 import datetime
@@ -55,5 +57,16 @@ def setup_logger(directory):
 # Call this once to get your logger object
 LOGGER = setup_logger(LOGS_DIR)
 
-login_to_tinder = LoginPage(driver)
-login_to_tinder.login_fb()
+
+class TinderAutomation:
+    def __init__(self):
+        self.driver = webdriver.Chrome(options=chrome_options)
+        self.WEB_URL = 'https://tinder.com'
+        self.logger = setup_logger(LOGS_DIR)
+
+        #initiate the browser to open url
+        self.driver.get(self.WEB_URL)
+        self.is_logged_in = False
+        self.login_to_tinder = LoginPage(self.driver)
+        self.profile_interaction = ProfileInteractionPage(self.driver)
+        self.dismiss_requests = DismissRequests(self.driver)
