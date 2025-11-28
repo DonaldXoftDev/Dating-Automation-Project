@@ -1,7 +1,8 @@
 from selenium.common import TimeoutException
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
-import logging
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
 from base_page import BasePage
 
 
@@ -10,9 +11,9 @@ class DismissRequests(BasePage):
     def __init__(self, driver, logger):
         super().__init__(driver, logger)
 
-        self.LOCATION_LOCATOR = ()
-        self.NOTIFICATION_LOCATOR = ()
-        self.COOKIES_LOCATOR = ()
+        self.LOCATION_LOCATOR = (By.XPATH, '//div[text()="Allow"]')
+        self.NOTIFICATION_LOCATOR = (By.XPATH, '//div[text()="I’ll miss out"]')
+        self.COOKIES_LOCATOR = (By.XPATH,)
 
         self.locators_list = [
             {'locator': self.LOCATION_LOCATOR, 'description': 'allow for locator popup'},
