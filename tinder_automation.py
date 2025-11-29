@@ -67,12 +67,11 @@ class TinderAutomation:
 
         #initiate the browser to open url
         self.driver.get(self.WEB_URL)
-        self.is_logged_in = False
 
         self.expected_page_url = "/app/recs"
 
         #page object instances
-        self.login_to_tinder = LoginPage(self.driver,self.logger)
+        self.login_page = LoginPage(self.driver, self.logger)
         self.profile_interaction = ProfileInteractionPage(self.driver, self.logger)
         self.dismiss_requests = DismissRequests(self.driver, self.logger)
 
@@ -81,16 +80,32 @@ class TinderAutomation:
         self.FB_1ST_LOGIN_BTN_LOCATOR = (By.XPATH, '//div[text()="Log in with Facebook"]')
 
     def click_tinder_fb_login_btn(self):
-        fb_login_element = self.wait.until(
-            ec.presence_of_element_located(self.FB_1ST_LOGIN_BTN_LOCATOR)
-        )
-        fb_login_element.click()
+        try:
+            fb_login_element = self.wait.until(
+                ec.presence_of_element_located(self.FB_1ST_LOGIN_BTN_LOCATOR)
+            )
+            fb_login_element.click()
+            self.logger.debug('FB login with tinder button was clicked')
+            return True
+
+        except TimeoutException:
+            self.logger.warning('FB login with tinder button was not found')
+            return False
+
+
 
     def click_tinder_login(self):
-        tinder_login_element = self.wait.until(
-            ec.presence_of_element_located(self.NAVIGATE_TO_LOGIN_BTN)
-        )
-        tinder_login_element.click()
+        try:
+            tinder_login_element = self.wait.until(
+                ec.presence_of_element_located(self.NAVIGATE_TO_LOGIN_BTN)
+            )
+            tinder_login_element.click()
+            self.logger.debug('Clicking Tinder Login Button ...')
+            return True
+
+        except TimeoutException:
+            self.logger.debug('Tinder Login Button was not found.')
+            return False
 
     def is_on_tinder(self):
         try:
@@ -102,49 +117,89 @@ class TinderAutomation:
             self.logger.warning("URL verification failed: Timed out waiting for the correct page.")
             return False
 
-        except Exception as e:
-            self.logger.error(f'Unexpected error during URL check: {e}')
+    def navigate_to_login(self):
+
+        try:
+            self.click_tinder_login() # there exist a nested try/except block in both methods
+            self.click_tinder_fb_login_btn()
+            return True
+
+        except TimeoutException:
+            self.logger.warning("Timed out while navigating to login page")
             return False
 
-    def navigate_to_login(self):
+        except StaleElementReferenceException:
+            logging.warning("Login button not fully loaded while navigating to login page")
+            return False
+
+
+    def login_sequence(self,user_name,pass_word):
         is_on_tinder_site = self.is_on_tinder()
 
         if not is_on_tinder_site:
-            try:
-                self.click_tinder_login()
-                self.click_tinder_fb_login_btn()
-                return True
-
-            except TimeoutException:
-                self.logger.warning("Timed out while navigating to login page")
+            if not self.navigate_to_login():
+                self.logger.warning("Login sequence failed")
                 return False
 
-            except StaleElementReferenceException:
-                logging.warning("Login button not fully loaded while navigating to login page")
+            if not self.login_page.click_fb_login_btn():
+                self.logger.warning("Login sequence failed")
                 return False
 
+            has_entered_credentials = (self.login_page.enter_user_name(user_name)
+                                       and self.login_page.enter_password(pass_word))
 
-        self.is_logged_in = is_on_tinder_site
-        return False
+            if not has_entered_credentials:
+                self.logger.warning("Login sequence failed")
+                return False
+        return True
 
 
 
-    def run_dating_automation(self):
 
-        is_navigate_login = self.navigate_to_login()
+    def get_new_window(self, window_name):
+        handle = self.driver.window_handles[1]
+        if handle and handle not in self.driver.window_handles:
+            self.logger.error(f'The window name {window_name} was not found in list of window handles ')
+            return None
 
-        if  is_navigate_login:
-            self.login_to_tinder.login_fb(is_navigate_login)
+        self.driver.switch_to.window(handle)
+        self.logger.info(f'Successfully switched to  {window_name} window')
+        return handle
 
-        if self.is_logged_in:
-            self.dismiss_requests.dismiss_all_pop_up_requests()
-            while True:
-                is_hit = self.profile_interaction.hit_like_btn()
-                if not is_hit:
-                    break
+    def like_sequence(self):
+        return True
+
+    def teardown(self):
+        pass
+
+    def run_dating_automation(self,user_name,pass_word):
+        base_window = self.driver.window_handles[0]
+
+        if not self.login_sequence(user_name,pass_word):
+            self.logger.warning('Warning: Login sequence failed ')
+            raise ValueError('Login sequence failed')
+
+        fb_window = self.get_new_window('Facebook')
+
+
+        if not fb_window:
+            self.logger.warning('Warning: Facebook window was not found ')
+            raise ValueError('Facebook window was not found ')
+
+        self.driver.switch_to.window(base_window)
+        self.logger.info('Switched back to base window ')
+
+        if not self.like_sequence():
+            raise ValueError('Liking sequence failed')
+
+        self.teardown()
+
+
+username = os.getenv("YOUR_USERNAME")
+password = os.getenv("YOUR_PASSWORD")
 
 dating_automation = TinderAutomation()
-dating_automation.run_dating_automation()
+dating_automation.run_dating_automation(username, password)
 
 
 

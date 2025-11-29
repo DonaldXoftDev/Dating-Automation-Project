@@ -1,5 +1,5 @@
 import os
-from selenium.common import TimeoutException
+from selenium.common import TimeoutException, NoSuchElementException
 import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -12,11 +12,8 @@ class LoginPage(BasePage):
     def __init__(self, driver, logger):
         super().__init__(driver, logger)
         self.current_web_title = self.driver.title.lower()
-        self.logging = logger
 
         #credentials
-        self.username = os.getenv("YOUR_USERNAME")
-        self.password = os.getenv("YOUR_PASSWORD")
 
         self.fb_login_title = 'Facebook'
         self.tinder_title = 'Tinder | Match. Chat. Date.'
@@ -36,44 +33,34 @@ class LoginPage(BasePage):
                 ec.presence_of_element_located(self.FB_LOGIN_BTN_LOCATOR)
             )
             fb_login_btn.click()
-            self.logging.info("FB login button clicked")
+            self.logger.info("FB login button clicked")
+            return True
 
         except TimeoutException:
-            self.logging.info('Failed to click the facebook login button. Script timed out')
-            raise Exception("Failed to click the facebook login button. Script timed out")
+            self.logger.info('Failed to click the facebook login button. Script timed out')
+            return False
 
-    def enter_email(self):
-        email_element = self.driver.find_element(*self.EMAIL_LOCATOR)
-        email_element.send_keys(self.username)
-        self.logging.info('Entering email')
-        print(self.username)
-
-    def enter_password(self):
-        password_element = self.driver.find_element(*self.PASSWORD_LOCATOR)
-        password_element.send_keys(self.password)
-        self.logging.info('Entering password')
-        print(self.password)
-
-    def switch_window_and_verify(self, new_window, new_window_title):
-        self.driver.switch_to.window(new_window)
-
+    def enter_user_name(self, username):
         try:
-            self.wait.until(
-                ec.presence_of_element_located(self.TEXT_ON_FB_PAGE)
-            )
-            new_window_title = new_window_title.lower()
-            print(new_window_title)
-            print(self.current_web_title)
+            email_element = self.driver.find_element(*self.EMAIL_LOCATOR)
+            email_element.send_keys(username)
+            self.logger.info('Entering email')
+            return True
+        except NoSuchElementException:
+            self.logger.warning('Email element not found ')
+            return False
 
-            if self.current_web_title == new_window_title:
-                pass
 
-        except TimeoutException:
-            raise ValueError(f'Page Timed out while switching to {new_window_title}')
+    def enter_password(self,password):
+        try:
+            password_element = self.driver.find_element(*self.PASSWORD_LOCATOR)
+            password_element.send_keys(password)
+            self.logger.info('Entering password')
+            return True
 
-        except new_window_title == 'new tab':
-            self.logging.info(f'Failed to switch to {new_window_title}, page still in {self.current_web_title}')
-            raise ValueError(f"Failed to switch to {new_window_title},page still in {self.current_web_title}")
+        except NoSuchElementException:
+            self.logger.warning('Password element not found ')
+            return False
 
 
     def click_continue_to_fb(self):
@@ -82,32 +69,10 @@ class LoginPage(BasePage):
                 ec.presence_of_element_located(self.CONTINUE_TO_FB_LOCATOR)
             )
             continue_btn.click()
-            self.logging.info('Successfully clicked Continue button')
+            self.logger.info('Successfully clicked Continue button')
+            return True
 
         except TimeoutException:
-            self.logging.info('Failed to click Continue button')
+            self.logger.info('Failed to click Continue button')
+            return False
 
-
-    def login_fb(self,is_navigate_login):
-
-        if not is_navigate_login:
-            self.logging.warning("Log in failed due to timeout while trying to navigate to login page")
-            raise ValueError('Login failed due to timeout while navigating to login page')
-
-        if not self.username or not self.password:
-            self.logging.info("No username or password saved in the .env file")
-            raise ValueError("No username or password saved to .env file")
-
-        base_window = self.driver.window_handles[0]
-        time.sleep(1)
-        fb_login_window = self.driver.window_handles[1]
-
-        #switch to fb page
-        self.switch_window_and_verify(fb_login_window, self.fb_login_title)
-
-        self.enter_email()
-        self.enter_password()
-        self.click_fb_login_btn()
-
-        #switch back to tinder page
-        self.switch_window_and_verify(base_window, self.tinder_title)

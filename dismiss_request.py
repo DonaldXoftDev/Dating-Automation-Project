@@ -29,19 +29,19 @@ class DismissRequests(BasePage):
             )
 
             request.click()
-            self.logging.info(f'Clicked {description} ')
+            self.logger.info(f'Clicked {description} ')
             return True, f'Clicked {description} '
 
         # except NoSuchElementException:
-        #     self.logging.error(f'{description} Not found, skipping element')
+        #     self.logger.error(f'{description} Not found, skipping element')
         #     return True, f'{description} Not found, skipping element'
 
         except TimeoutException:
-            self.logging.error(f'Timeout while trying to click {description}, skipping element')
+            self.logger.error(f'Timeout while trying to click {description}, skipping element')
             return True, f'Timeout while trying to click {description}, skipping element'
 
         except Exception as e:
-            self.logging.error(e)
+            self.logger.error(e)
             return False, f'Unexpected error while trying to click element {description}'
 
 
