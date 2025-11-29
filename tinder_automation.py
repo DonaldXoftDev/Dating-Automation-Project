@@ -172,6 +172,8 @@ class TinderAutomation:
     def teardown(self):
         pass
 
+    def dismiss_all_popups(self):
+        pass
     def run_dating_automation(self,user_name,pass_word):
         base_window = self.driver.window_handles[0]
 
