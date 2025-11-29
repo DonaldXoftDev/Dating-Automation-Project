@@ -1,6 +1,4 @@
-import os
-from selenium.common import TimeoutException, NoSuchElementException
-import time
+from selenium.common import TimeoutException, NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 import logging
@@ -26,6 +24,37 @@ class LoginPage(BasePage):
         self.TEXT_ON_FB_PAGE = (By.ID, "homelink")
         self.CONTINUE_TO_FB_LOCATOR = (By.XPATH, '//span[text()="Continue as Itz IK"]')
 
+        self.expected_page_url = "/app/recs"
+
+        # navigation locators
+        self.NAVIGATE_TO_LOGIN_BTN = (By.XPATH, '//div[text()="Log in"]')
+        self.FB_1ST_LOGIN_BTN_LOCATOR = (By.XPATH, '//div[text()="Log in with Facebook"]')
+
+    def navigate_to_login(self):
+
+        try:
+            self.click_tinder_login()  # there exist a nested try/except block in both methods
+            self.click_tinder_fb_login_btn()
+            return True
+
+        except TimeoutException:
+            self.logger.warning("Timed out while navigating to login page")
+            return False
+
+    def navigation_sequence(self):
+        is_on_tinder_site = self.is_on_tinder()
+
+        if not is_on_tinder_site:
+            if not self.navigate_to_login():
+                self.logger.warning("Login sequence failed")
+                return False
+
+            if not self.click_fb_login_btn():
+                self.logger.warning("Login sequence failed")
+                return False
+
+        return True
+
 
     def click_fb_login_btn(self):
         try:
@@ -46,6 +75,7 @@ class LoginPage(BasePage):
             email_element.send_keys(username)
             self.logger.info('Entering email')
             return True
+
         except NoSuchElementException:
             self.logger.warning('Email element not found ')
             return False
@@ -76,3 +106,47 @@ class LoginPage(BasePage):
             self.logger.info('Failed to click Continue button')
             return False
 
+    def enter_credentials(self,user_name, pass_word):
+        self.enter_user_name(user_name)
+        self.enter_password(pass_word)
+
+    def click_tinder_fb_login_btn(self):
+        try:
+            fb_login_element = self.wait.until(
+                ec.presence_of_element_located(self.FB_1ST_LOGIN_BTN_LOCATOR)
+            )
+            fb_login_element.click()
+            self.logger.debug('FB login with tinder button was clicked')
+            return True
+
+        except TimeoutException:
+            self.logger.warning('FB login with tinder button was not found')
+            return False
+
+    def click_tinder_login(self):
+        try:
+            tinder_login_element = self.wait.until(
+                ec.presence_of_element_located(self.NAVIGATE_TO_LOGIN_BTN)
+            )
+            tinder_login_element.click()
+            self.logger.debug('Clicking Tinder Login Button ...')
+            return True
+
+        except TimeoutException:
+            self.logger.debug('Tinder Login Button was not found.')
+            return False
+
+    def is_on_tinder(self):
+        try:
+            self.wait.until(ec.url_contains(self.expected_page_url))
+            self.logger.info(f'Url verification Successful for {self.expected_page_url}')
+            return True
+
+        except TimeoutException:
+            self.logger.warning("URL verification failed: Timed out waiting for the correct page.")
+            return False
+
+
+        except StaleElementReferenceException:
+            logging.warning("Login button not fully loaded while navigating to login page")
+            return False
