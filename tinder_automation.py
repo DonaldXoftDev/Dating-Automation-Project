@@ -26,36 +26,8 @@ user_data_dir = os.path.join(os.getcwd(), 'chrome_profile')
 #store profile info in specified directory
 chrome_options.add_argument(f'--user-data-dir={user_data_dir}')
 
-LOGS_DIR = "logs"
 
-
-def setup_logger(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    # Define the full file path
-    log_filename = datetime.datetime.now().strftime("automation_%Y%m%d_%H%M%S.log")
-    full_path = os.path.join(directory, log_filename)
-
-    logging.basicConfig(
-        # Save messages to the defined file
-        filename=full_path,
-        # ... (Keep existing file setup and format) ...
-        level=logging.INFO,  # Set your primary app level to INFO (or DEBUG if you need detail)
-        # Define the format of the log message
-        format='%(asctime)s - %(levelname)s - %(module)s - %(message)s'
-    )
-
-    #  Silence the Noise (Crucial Step!)
-    # Set the log level of Selenium's low-level communication to WARNING or higher
-    logging.getLogger('selenium.webdriver.remote.remote_connection').setLevel(logging.WARNING)
-
-    # Set the log level of the underlying HTTP connection pool to WARNING
-    logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-
-    #  Return your application logger
-    return logging.getLogger('DatingAutomationLogger')  # Use your application's logger name
-
+from utils import setup_logger, LOGS_DIR
 
 # Call this once to get your logger object
 
@@ -69,16 +41,10 @@ class TinderAutomation:
         #initiate the browser to open url
         self.driver.get(self.WEB_URL)
 
-
-
         #page object instances
         self.login_page = LoginPage(self.driver, self.logger)
         self.profile_interaction = ProfileInteractionPage(self.driver, self.logger)
         self.dismiss_requests = DismissRequests(self.driver, self.logger)
-
-
-
-
 
 
     def get_new_window(self, base_window):
@@ -99,12 +65,12 @@ class TinderAutomation:
     def run_dating_automation(self, user_name, pass_word):
         base_window = self.driver.window_handles[0]
 
-        if not self.navigation_sequence(user_name, pass_word):
-            self.logger.warning('Warning: Login sequence failed ')
+        if not self.login_page.navigation_sequence():
+            self.logger.warning('Warning: Login sequence failed')
             return False
 
         self.logger.info('Attempting to switch to facebook window')
-        fb_window = self.get_new_window('Facebook')
+        fb_window = self.get_new_window(base_window)
 
         if not fb_window:
             self.logger.warning('Warning: Facebook window did not appear')
@@ -125,8 +91,6 @@ class TinderAutomation:
         self.teardown()
 
 
-username = os.getenv("YOUR_USERNAME")
-password = os.getenv("YOUR_PASSWORD")
 
-dating_automation = TinderAutomation()
-dating_automation.run_dating_automation(username, password)
+# dating_automation = TinderAutomation()
+# dating_automation.run_dating_automation(username, password)
