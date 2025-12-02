@@ -1,5 +1,4 @@
 import time
-
 from selenium import webdriver
 from selenium.common import TimeoutException, NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
@@ -8,14 +7,18 @@ import logging
 import os
 
 
+
+#create selenium user_profile
+user_data_dir = r'C:\Users\hp\AppData\Local\Google\Chrome\User Data'
+PROFILE_NAME= 'Default'
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_experimental_option('detach', True)
 
-#create selenium user_profile
-user_data_dir = os.path.join(os.getcwd(), 'chrome_profile')
-
 #store profile info in specified directory
 chrome_options.add_argument(f'--user-data-dir={user_data_dir}')
+
+#the profile inside the user directory folder to use
+chrome_options.add_argument(f'profile-directory={PROFILE_NAME}')
 
 
 from selenium.webdriver.support.wait import WebDriverWait
@@ -188,31 +191,32 @@ class TestLoginPage:
 
 
     def test_login_page(self, username, password):
-        base_window = self.driver.window_handles[0]
-
-        is_logged_in = self.login_mock.is_on_tinder()
-
-        if not is_logged_in:
-            if not self.login_mock.navigate_to_login():
-                self.logger.critical('Initial login button Failed, Aborting')
-                return False
-
-            fb_window = self.get_new_window(base_window)
-            if not fb_window:
-                self.logger.warning('Facebook window pop up did not appear')
-                return False
-
-            self.logger.info('Attempting to switch to facebook window')
-            self.driver.switch_to.window(fb_window)
-
-            if not self.login_mock.enter_credentials(username, password):
-                self.logger.critical('Failed to enter credentials')
-                return False
-
-            self.driver.switch_to.window(base_window)
-            self.logger.info('Successfully switched back to tinder home page')
-
-        return True
+        pass
+        # base_window = self.driver.window_handles[0]
+        #
+        # is_logged_in = self.login_mock.is_on_tinder()
+        #
+        # if not is_logged_in:
+        #     if not self.login_mock.navigate_to_login():
+        #         self.logger.critical('Initial login button Failed, Aborting')
+        #         return False
+        #
+        #     fb_window = self.get_new_window(base_window)
+        #     if not fb_window:
+        #         self.logger.warning('Facebook window pop up did not appear')
+        #         return False
+        #
+        #     self.logger.info('Attempting to switch to facebook window')
+        #     self.driver.switch_to.window(fb_window)
+        #
+        #     if not self.login_mock.enter_credentials(username, password):
+        #         self.logger.critical('Failed to enter credentials')
+        #         return False
+        #
+        #     self.driver.switch_to.window(base_window)
+        #     self.logger.info('Successfully switched back to tinder home page')
+        #
+        # return True
 
 
 test_login = TestLoginPage()

@@ -19,7 +19,7 @@ class ProfileInteractionPage(BasePage):
 
         try:
             like_btn_element = self.wait.until(
-                ec.presence_of_element_located(self.LIKE_BTN_LOCATOR)
+                ec.element_to_be_clickable(self.LIKE_BTN_LOCATOR)
             )
 
             like_btn_element.click()
@@ -37,7 +37,7 @@ class ProfileInteractionPage(BasePage):
             self.logger.info('A pop up is obstructing the like btn, Attempting to click the  Back to tinder page')
             try:
                 bck_to_tinder_btn = self.wait.until(
-                    ec.presence_of_element_located(self.BACK_TO_TINDER_LOCATOR)
+                    ec.element_to_be_clickable(self.BACK_TO_TINDER_LOCATOR)
 
                 )
                 bck_to_tinder_btn.click()

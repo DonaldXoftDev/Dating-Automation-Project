@@ -25,7 +25,7 @@ class DismissRequests(BasePage):
 
         try:
             request = self.wait.until(
-                ec.presence_of_element_located(locator)
+                ec.element_to_be_clickable(locator)
             )
 
             request.click()

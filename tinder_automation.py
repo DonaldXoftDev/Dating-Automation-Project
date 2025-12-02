@@ -65,30 +65,29 @@ class TinderAutomation:
     def run_dating_automation(self, user_name, pass_word):
         base_window = self.driver.window_handles[0]
 
-        if not self.login_page.navigation_sequence():
-            self.logger.warning('Warning: Login sequence failed')
-            return False
+        is_logged_in = self.login_page.is_on_tinder()
 
-        self.logger.info('Attempting to switch to facebook window')
-        fb_window = self.get_new_window(base_window)
+        if not is_logged_in:
+            if not self.login_page.navigate_to_login():
+                self.logger.critical('Initial login button Failed, Aborting')
+                return False
 
-        if not fb_window:
-            self.logger.warning('Warning: Facebook window did not appear')
-            return False
+            fb_window = self.get_new_window(base_window)
+            if not fb_window:
+                self.logger.warning('Facebook window pop up did not appear')
+                return False
 
-        self.logger.info('Successfully switched to facebook window')
+            self.logger.info('Attempting to switch to facebook window')
+            self.driver.switch_to.window(fb_window)
 
-        if not self.login_page.enter_credentials:
-            self.logger.warning("Failed to enter user credentials, the fields were not found")
-            return False
+            if not self.login_page.enter_credentials(user_name, pass_word):
+                self.logger.critical('Failed to enter credentials')
+                return False
 
-        self.driver.switch_to.window(base_window)
-        self.logger.info('Switching back to Tinder base window ')
+            self.driver.switch_to.window(base_window)
+            self.logger.info('Successfully switched back to tinder home page')
 
-        if not self.like_sequence():
-            raise ValueError('Liking sequence failed')
-
-        self.teardown()
+        return True
 
 
 
