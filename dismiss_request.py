@@ -13,12 +13,12 @@ class DismissRequests(BasePage):
 
         self.LOCATION_LOCATOR = (By.XPATH, '//div[text()="Allow"]')
         self.NOTIFICATION_LOCATOR = (By.XPATH, '//div[text()="I’ll miss out"]')
-        # self.COOKIES_LOCATOR = (By.XPATH, )
+        self.COOKIES_LOCATOR = (By.XPATH, '//div[text()="I accept"]')
 
         self.locators_list = [
             {'locator': self.LOCATION_LOCATOR, 'description': 'allow for locator popup'},
             {'locator': self.NOTIFICATION_LOCATOR, 'description': 'not interested for notification popup'},
-            # {'locator': self.COOKIES_LOCATOR, 'description': 'I accept for cookies popup'},
+            {'locator': self.COOKIES_LOCATOR, 'description': 'I accept for cookies popup'},
         ]
 
     def dismiss_requests(self,locator, description):
@@ -31,10 +31,6 @@ class DismissRequests(BasePage):
             request.click()
             self.logger.info(f'Clicked {description} ')
             return True, f'Clicked {description} '
-
-        # except NoSuchElementException:
-        #     self.logger.error(f'{description} Not found, skipping element')
-        #     return True, f'{description} Not found, skipping element'
 
         except TimeoutException:
             self.logger.error(f'Timeout while trying to click {description}, skipping element')
