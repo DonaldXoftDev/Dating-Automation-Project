@@ -6,25 +6,26 @@ from selenium.webdriver.support import expected_conditions as ec
 import logging
 import os
 
+from selenium.webdriver.support.wait import WebDriverWait
+
+from base_page import BasePage
+from utils import setup_logger,LOGS_DIR, username, password
+
 
 
 #create selenium user_profile
-user_data_dir = r'C:\Users\hp\AppData\Local\Google\Chrome\User Data'
-PROFILE_NAME= 'Default'
+user_data_dir = r"C:\Users\hp\Desktop\ChromeAutomationData"
 chrome_options = webdriver.ChromeOptions()
-chrome_options.add_experimental_option('detach', True)
+# chrome_options.add_experimental_option('detach', True)
 
 #store profile info in specified directory
 chrome_options.add_argument(f'--user-data-dir={user_data_dir}')
 
 #the profile inside the user directory folder to use
-chrome_options.add_argument(f'profile-directory={PROFILE_NAME}')
+# chrome_options.add_argument(f'profile-directory={PROFILE_NAME}')
 
-
-from selenium.webdriver.support.wait import WebDriverWait
-
-from base_page import BasePage
-from utils import setup_logger,LOGS_DIR, username, password
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--disable-dev-shm-usage')
 
 
 
@@ -53,6 +54,7 @@ class LoginPage(BasePage):
         # navigation locators
         self.NAVIGATE_TO_LOGIN_BTN = (By.XPATH, '//div[text()="Log in"]')
         self.FB_1ST_LOGIN_BTN_LOCATOR = (By.XPATH, '//div[text()="Log in with Facebook"]')
+        self.fb_popup_url = '/privacy/consent/'
 
 
     def navigate_to_login(self):
@@ -120,7 +122,6 @@ class LoginPage(BasePage):
     def enter_credentials(self,user_name, pass_word):
         self.enter_user_name(user_name)
         self.enter_password(pass_word)
-        self.click_fb_login_btn()
         return True
 
     def click_tinder_fb_login_btn(self):
@@ -129,7 +130,7 @@ class LoginPage(BasePage):
                 ec.element_to_be_clickable(self.FB_1ST_LOGIN_BTN_LOCATOR)
             )
             fb_login_element.click()
-            self.logger.debug('FB login with tinder button was clicked')
+            self.logger.info('FB login with tinder button was clicked')
             return True
 
         except TimeoutException:
@@ -142,12 +143,30 @@ class LoginPage(BasePage):
                 ec.element_to_be_clickable(self.NAVIGATE_TO_LOGIN_BTN)
             )
             tinder_login_element.click()
-            self.logger.debug('Clicking Tinder Login Button ...')
+            self.logger.info('Clicking Tinder Login Button ...')
             return True
 
         except TimeoutException:
-            self.logger.debug('Tinder Login Button was not found.')
+            self.logger.info('Tinder Login Button was not found.')
             return False
+
+    def get_fb_window(self, base_window):
+        try:
+            is_url = self.wait.until(
+                ec.url_contains(self.fb_popup_url)
+            )
+            self.logger.info('FB popup window was found')
+
+            if is_url:
+                for handle in self.driver.window_handles:
+                    if handle != base_window:
+                        return handle
+            return None
+
+        except TimeoutException:
+            self.logger.info('FB popup window was not found due to timeout')
+            return None
+
 
     def is_on_tinder(self):
         try:
@@ -159,64 +178,20 @@ class LoginPage(BasePage):
             self.logger.warning("URL verification failed: Attempting Initial login form home page")
             return False
 
-
 class TestLoginPage:
     def __init__(self):
 
         self.web_url = 'https://www.tinder.com'
         self.driver = webdriver.Chrome(options=chrome_options)
         self.driver.get(self.web_url)
-        self.wait = WebDriverWait(self.driver, 15)
+        self.wait = WebDriverWait(self.driver, 20)
         self.logger = setup_logger(LOGS_DIR)
 
         self.login_mock = LoginPage(self.driver, self.logger)
 
 
-    def get_new_window(self, base_window):
-        try:
-            fb_window = self.wait.until(
-                ec.number_of_windows_to_be(2)
-            )
-            self.logger.info('The fb window handle have been found')
-
-            if fb_window:
-                for handle in self.driver.window_handles:
-                    if handle != base_window:
-                        return handle
-                return None
-
-        except TimeoutException:
-            self.logger.warning('Failed to find the new window handle')
-            return None
-
-
     def test_login_page(self, username, password):
         pass
-        # base_window = self.driver.window_handles[0]
-        #
-        # is_logged_in = self.login_mock.is_on_tinder()
-        #
-        # if not is_logged_in:
-        #     if not self.login_mock.navigate_to_login():
-        #         self.logger.critical('Initial login button Failed, Aborting')
-        #         return False
-        #
-        #     fb_window = self.get_new_window(base_window)
-        #     if not fb_window:
-        #         self.logger.warning('Facebook window pop up did not appear')
-        #         return False
-        #
-        #     self.logger.info('Attempting to switch to facebook window')
-        #     self.driver.switch_to.window(fb_window)
-        #
-        #     if not self.login_mock.enter_credentials(username, password):
-        #         self.logger.critical('Failed to enter credentials')
-        #         return False
-        #
-        #     self.driver.switch_to.window(base_window)
-        #     self.logger.info('Successfully switched back to tinder home page')
-        #
-        # return True
 
 
 test_login = TestLoginPage()
