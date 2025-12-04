@@ -11,21 +11,25 @@ from selenium.webdriver.support.expected_conditions import presence_of_element_l
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from dotenv import load_dotenv
+
 from login_page import LoginPage
 from profile_interaction_page import ProfileInteractionPage
 from dismiss_request import DismissRequests
 
 load_dotenv()
-
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_experimental_option('detach', True)
-
 #create selenium user_profile
-user_data_dir = os.path.join(os.getcwd(), 'chrome_profile')
+user_data_dir = r"C:\Users\hp\Desktop\ChromeAutomationData"
+chrome_options = ChromeOptions()
 
-#store profile info in specified directory
+chrome_options.add_experimental_option('detach', True)
+# chrome_options.add_argument('--headless=new') # Use 'new' for modern Chrome versions
+
+# 2. Add the clean user data directory
 chrome_options.add_argument(f'--user-data-dir={user_data_dir}')
 
+# # 3. Add necessary stability flags for headless mode
+# chrome_options.add_argument('--no-sandbox')
+# chrome_options.add_argument('--disable-dev-shm-usage')
 
 from utils import setup_logger, LOGS_DIR
 
@@ -62,34 +66,28 @@ class TinderAutomation:
     def dismiss_all_popups(self):
         pass
 
-    def run_dating_automation(self, user_name, pass_word):
-        base_window = self.driver.window_handles[0]
-
+    def run_dating_automation(self):
         is_logged_in = self.login_page.is_on_tinder()
 
-        if not is_logged_in:
-            if not self.login_page.navigate_to_login():
-                self.logger.critical('Initial login button Failed, Aborting')
-                return False
+        self.logger.info('Dating automation project is starting...')
+        if is_logged_in:
+            if not self.dismiss_requests.dismiss_all_pop_up_requests():
+                self.logger.warning("Couldn't dismiss all pop up request")
 
-            fb_window = self.get_new_window(base_window)
-            if not fb_window:
-                self.logger.warning('Facebook window pop up did not appear')
-                return False
+            profile_exists = True
+            profile_swipe_limit = 100
 
-            self.logger.info('Attempting to switch to facebook window')
-            self.driver.switch_to.window(fb_window)
+            self.logger.info('Initiating Like sequence...')
+            while profile_exists:
+                self.profile_interaction.hit_like_btn()
+                profile_swipe_limit -= 1
 
-            if not self.login_page.enter_credentials(user_name, pass_word):
-                self.logger.critical('Failed to enter credentials')
-                return False
+                if profile_swipe_limit == 0:
+                    profile_exists = False
+                    self.logger.info('All profiles have been exhausted for the day. Try again tomorrow.')
 
-            self.driver.switch_to.window(base_window)
-            self.logger.info('Successfully switched back to tinder home page')
-
-        return True
 
 
 
 # dating_automation = TinderAutomation()
-# dating_automation.run_dating_automation(username, password)
+# dating_automation.run_dating_automation()
